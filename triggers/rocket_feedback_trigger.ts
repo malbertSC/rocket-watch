@@ -14,36 +14,22 @@ const sampleTrigger: Trigger<typeof CollectRocketFeedbackWorkflow.definition> =
     description: "Collect feedback for a rocket review",
     workflow:
       `#/workflows/${CollectRocketFeedbackWorkflow.definition.callback_id}`,
-    // inputs: {
-    //   interactivity: {
-    //     value: TriggerContextData.Shortcut.interactivity,
-    //   },
-    //   // channel: {
-    //   //   value: TriggerContextData.Shortcut.channel_id,
-    //   // },
-    //   user: {
-    //     value: TriggerContextData.Shortcut.user_id,
-    //   },
-    // },
     inputs: {
-      channel: {
-        value: "{{data.channel_id}}",
+      commenter_slack_user_id: {
+        value: "{{data.commenter_slack_user_id}}",
       },
-      // reviewer: {
-      //   value: "{{data.reviewer_slack_id}}",
-      // },
-      astronaut: {
-        value: "{{data.astronaut_slack_id}}",
+      astronaut_slack_user_id: {
+        value: "{{data.astronaut_slack_user_id}}",
       },
-      // em: {
-      //   value: "{{data.em_slack_id}}",
-      // },
-      // commentUrl: {
-      //   value: "{{data.pr_comment_url}}",
-      // },
-      // teamChannel: {
-      //   value: "{{data.slack_team_channel}}",
-      // },
+      comment_url: {
+        value: "{{data.comment_url}}",
+      },
+      comment_contents: {
+        value: "{{data.comment_contents}}",
+      },
+      team_channel_id: {
+        value: "{{data.team_channel_id}}",
+      },
     },
   };
 
