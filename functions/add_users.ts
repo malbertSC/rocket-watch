@@ -47,7 +47,7 @@ export default SlackFunction(
         callback_id: "manage_users",
         title: {
           type: "plain_text",
-          text: "title",
+          text: "Your Team",
         },
         blocks: [
           // elements: [

@@ -1,5 +1,6 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import UsersCacheDatastore from "../datastores/users_cache_datastore.ts";
+import TeamChannelUsersDatastore from "../datastores/team_channel_users_datastore.ts";
 
 const RESPONSE_ACTION_ID = "response_action";
 
@@ -54,8 +55,20 @@ export const GetRocketFeedbackDefinition = DefineFunction({
 export default SlackFunction(
   GetRocketFeedbackDefinition,
   async ({ inputs, client }) => {
+    const reviewerResult = await client.apps.datastore.get<
+      typeof UsersCacheDatastore.definition
+    >({
+      datastore: UsersCacheDatastore.name,
+      id: inputs.reviewer_slack_username,
+    });
+
+    if (!reviewerResult.ok) {
+      console.log(reviewerResult.error);
+      throw new Error(reviewerResult.error);
+    }
+
     const infoText =
-      `Thanks for highlighting @${inputs.reviewer_slack_username}'s <${inputs.comment_url}|review comment>!  What was so great about it?  What did you learn?`;
+      `Thanks for highlighting <@${reviewerResult.item.slack_user_id}>'s <${inputs.comment_url}|review comment>!  What was so great about it?  What did you learn?`;
 
     const cachedAstronautUserResult = await client.apps.datastore.get<
       typeof UsersCacheDatastore.definition
@@ -68,6 +81,8 @@ export default SlackFunction(
       console.log(cachedAstronautUserResult.error);
       throw new Error(cachedAstronautUserResult.error);
     }
+
+    console.log("cachedUserResult", cachedAstronautUserResult);
 
     const response = await client.chat.postMessage({
       channel: cachedAstronautUserResult.item.slack_user_id || "",
@@ -116,72 +131,121 @@ export default SlackFunction(
       completed: false,
     };
   },
-  // ).addBlockActionsHandler(
-  //   [RESPONSE_ACTION_ID],
-  //   async function ({ action, body, client }) {
-  //     const msgUpdate = await client.chat.update({
-  //       channel: body.container.channel_id,
-  //       ts: body.container.message_ts,
-  //       blocks: [{
-  //         "type": "context",
-  //         "elements": [
-  //           {
-  //             "type": "plain_text",
-  //             "text": "done!",
-  //             "emoji": true,
-  //           },
-  //         ],
-  //       }],
-  //     });
-  //     if (!msgUpdate.ok) {
-  //       console.log("Error during manager chat.update!", msgUpdate.error);
-  //     }
+).addBlockActionsHandler(
+  [RESPONSE_ACTION_ID],
+  async function ({ action, body, client }) {
+    const inputs = body.function_data.inputs;
+    const msgUpdate = await client.chat.update({
+      channel: body.container.channel_id,
+      ts: body.container.message_ts,
+      blocks: [{
+        "type": "context",
+        "elements": [
+          {
+            "type": "plain_text",
+            "text": "done!",
+            "emoji": true,
+          },
+        ],
+      }],
+    });
+    if (!msgUpdate.ok) {
+      console.log("Error during manager chat.update!", msgUpdate.error);
+    }
 
-  //     const astronaut = await client.users.info({
-  //       user: body.function_data.inputs.astronaut_slack_user_id,
-  //     });
-  //     const commenter = await client.users.info({
-  //       user: body.function_data.inputs.commenter_slack_user_id,
-  //     });
-  //     console.log("astronaut", astronaut);
+    const astronautResult = await client.apps.datastore.get<
+      typeof UsersCacheDatastore.definition
+    >({
+      datastore: UsersCacheDatastore.name,
+      id: inputs.astronaut_slack_username,
+    });
 
-  //     const teamText =
-  //       `@${astronaut.user.name} highlighted @${commenter.user.name}'s <www.google.com|review comment>!`;
+    if (!astronautResult.ok) {
+      console.log(astronautResult.error);
+      throw new Error(astronautResult.error);
+    }
 
-  //     const response = await client.chat.postMessage({
-  //       channel: body.function_data.inputs.team_channel_id || "",
-  //       blocks: [
-  //         {
-  //           "type": "header",
-  //           "text": {
-  //             "type": "plain_text",
-  //             "text": ":rocket: Rocket Watch! :rocket:",
-  //             "emoji": true,
-  //           },
-  //         },
-  //         {
-  //           "type": "section",
-  //           "text": {
-  //             "type": "mrkdwn",
-  //             "text": teamText,
-  //           },
-  //         },
-  //         {
-  //           "type": "section",
-  //           "text": {
-  //             "type": "mrkdwn",
-  //             "text": `>${action.value}`,
-  //           },
-  //         },
-  //       ],
-  //     });
+    const reviewerResult = await client.apps.datastore.get<
+      typeof UsersCacheDatastore.definition
+    >({
+      datastore: UsersCacheDatastore.name,
+      id: inputs.reviewer_slack_username,
+    });
 
-  //     if (!response.ok) {
-  //       console.log("Error during request chat.postMessage!", response.error);
-  //     }
-  //     await client.functions.completeSuccess({
-  //       function_execution_id: body.function_data.execution_id,
-  //       outputs: { astronautFeedback: action.value },
-  //     });
-  //   },
+    if (!reviewerResult.ok) {
+      console.log(reviewerResult.error);
+      throw new Error(reviewerResult.error);
+    }
+
+    // const astronaut = await client.users.info({
+    //   user: body.function_data.inputs.astronaut_slack_user_id,
+    // });
+    // const commenter = await client.users.info({
+    //   user: body.function_data.inputs.commenter_slack_user_id,
+    // });
+    // console.log("astronaut", astronaut);
+    const teamText =
+      `<@${astronautResult.item.slack_user_id}> highlighted <@${reviewerResult.item.slack_user_id}>'s <${inputs.comment_url}|review comment>!`;
+
+    const channelsToPostToResult = await client.apps.datastore.query({
+      datastore: TeamChannelUsersDatastore.name,
+      expression: "contains (#user_term, :user)",
+      expression_attributes: {
+        "#user_term": "slack_user_ids",
+      },
+      expression_values: {
+        ":user": astronautResult.item.slack_user_id,
+      },
+    });
+
+    if (!channelsToPostToResult.ok) {
+      console.log(channelsToPostToResult.error);
+      throw new Error(channelsToPostToResult.error);
+    }
+
+    console.log("channels to post to", channelsToPostToResult);
+
+    for (
+      const channel of channelsToPostToResult.items.map((item) =>
+        item.team_slack_channel_id
+      )
+    ) {
+      const response = await client.chat.postMessage({
+        channel: channel,
+        blocks: [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": ":rocket: Rocket Watch! :rocket:",
+              "emoji": true,
+            },
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": teamText,
+            },
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `>${action.value}`,
+            },
+          },
+        ],
+      });
+
+      if (!response.ok) {
+        console.log("Error during request chat.postMessage!", response.error);
+      }
+    }
+
+    await client.functions.completeSuccess({
+      function_execution_id: body.function_data.execution_id,
+      outputs: { astronautFeedback: action.value },
+    });
+  },
 );
