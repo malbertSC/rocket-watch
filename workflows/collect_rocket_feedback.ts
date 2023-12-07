@@ -7,11 +7,15 @@ const CollectRocketFeedbackWorkflow = DefineWorkflow({
   description: "Collects feedback for rocket review reactions",
   input_parameters: {
     properties: {
-      commenter_slack_user_id: {
+      submitter_slack_username: {
         type: Schema.types.string,
-        description: "The user who wrote the PR comment",
+        description: "The user who wrote the PR",
       },
-      astronaut_slack_user_id: {
+      reviewer_slack_username: {
+        type: Schema.types.string,
+        description: "The user who wrote review comment",
+      },
+      astronaut_slack_username: {
         type: Schema.types.string,
         description: "The user who reacted to the PR comment",
       },
@@ -19,21 +23,17 @@ const CollectRocketFeedbackWorkflow = DefineWorkflow({
         type: Schema.types.string,
         description: "Contents of the review comment",
       },
-      comment_contents: {
+      comment_body: {
         type: Schema.types.string,
         description: "URL of the review comment",
       },
-      team_channel_id: {
-        type: Schema.types.string,
-        description: "Channel for posting the review highlight",
-      },
     },
     required: [
-      "commenter_slack_user_id",
-      "astronaut_slack_user_id",
+      "submitter_slack_username",
+      "reviewer_slack_username",
+      "astronaut_slack_username",
       "comment_url",
-      "comment_contents",
-      "team_channel_id",
+      "comment_body",
     ],
   },
 });

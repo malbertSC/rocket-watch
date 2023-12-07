@@ -1,7 +1,9 @@
 import { Manifest } from "deno-slack-sdk/mod.ts";
-import { UsersDatastore } from "./datastores/users_datastore.ts";
+import TeamChannelUsersDatastore from "./datastores/team_channel_users_datastore.ts";
 import CollectRocketFeedbackWorkflow from "./workflows/collect_rocket_feedback.ts";
-import { AddTeamUserFeedbackWorkflow } from "./workflows/add_team_user.ts";
+import AddTeamUserFeedbackWorkflow from "./workflows/add_team_user.ts";
+import UsersCacheDatastore from "./datastores/users_cache_datastore.ts";
+import UpdateUsersCacheWorkflow from "./workflows/update_users_cache.ts";
 
 /**
  * The app manifest contains the app's configuration. This
@@ -12,9 +14,13 @@ export default Manifest({
   name: "rocket-watch",
   description: "A template for building Slack apps with Deno",
   icon: "assets/default_new_app_icon.png",
-  workflows: [CollectRocketFeedbackWorkflow, AddTeamUserFeedbackWorkflow],
+  workflows: [
+    CollectRocketFeedbackWorkflow,
+    AddTeamUserFeedbackWorkflow,
+    UpdateUsersCacheWorkflow,
+  ],
   outgoingDomains: ["registry.sqprod.co"],
-  datastores: [UsersDatastore],
+  datastores: [TeamChannelUsersDatastore, UsersCacheDatastore],
   botScopes: [
     "commands",
     "chat:write",
@@ -22,5 +28,6 @@ export default Manifest({
     "datastore:read",
     "datastore:write",
     "users:read",
+    "team:read",
   ],
 });

@@ -1,7 +1,7 @@
 import { DefineDatastore, Schema } from "deno-slack-sdk/mod.ts";
 
-export const UsersDatastore = DefineDatastore({
-  name: "Users",
+export default DefineDatastore({
+  name: "TeamChannelUsers",
   primary_key: "team_slack_channel_id",
   attributes: {
     team_slack_channel_id: {

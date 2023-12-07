@@ -1,4 +1,5 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
+import UsersCacheDatastore from "../datastores/users_cache_datastore.ts";
 
 const RESPONSE_ACTION_ID = "response_action";
 
@@ -10,11 +11,15 @@ export const GetRocketFeedbackDefinition = DefineFunction({
   source_file: "functions/collect_rocket_feedback.ts",
   input_parameters: {
     properties: {
-      commenter_slack_user_id: {
+      submitter_slack_username: {
         type: Schema.types.string,
-        description: "The user who wrote the PR comment",
+        description: "The user who wrote the PR",
       },
-      astronaut_slack_user_id: {
+      reviewer_slack_username: {
+        type: Schema.types.string,
+        description: "The user who wrote review comment",
+      },
+      astronaut_slack_username: {
         type: Schema.types.string,
         description: "The user who reacted to the PR comment",
       },
@@ -22,21 +27,17 @@ export const GetRocketFeedbackDefinition = DefineFunction({
         type: Schema.types.string,
         description: "Contents of the review comment",
       },
-      comment_contents: {
+      comment_body: {
         type: Schema.types.string,
         description: "URL of the review comment",
       },
-      team_channel_id: {
-        type: Schema.types.string,
-        description: "Channel for posting the review highlight",
-      },
     },
     required: [
-      "commenter_slack_user_id",
-      "astronaut_slack_user_id",
+      "submitter_slack_username",
+      "reviewer_slack_username",
+      "astronaut_slack_username",
       "comment_url",
-      "comment_contents",
-      "team_channel_id",
+      "comment_body",
     ],
   },
   output_parameters: {
@@ -54,10 +55,22 @@ export default SlackFunction(
   GetRocketFeedbackDefinition,
   async ({ inputs, client }) => {
     const infoText =
-      `Thanks for highlighting ${inputs.astronaut_slack_user_id}'s <${inputs.comment_url}|review comment>!  What was so great about it?  What did you learn?`;
+      `Thanks for highlighting @${inputs.reviewer_slack_username}'s <${inputs.comment_url}|review comment>!  What was so great about it?  What did you learn?`;
+
+    const cachedAstronautUserResult = await client.apps.datastore.get<
+      typeof UsersCacheDatastore.definition
+    >({
+      datastore: UsersCacheDatastore.name,
+      id: inputs.astronaut_slack_username,
+    });
+
+    if (!cachedAstronautUserResult.ok) {
+      console.log(cachedAstronautUserResult.error);
+      throw new Error(cachedAstronautUserResult.error);
+    }
 
     const response = await client.chat.postMessage({
-      channel: inputs.astronaut_slack_user_id || "",
+      channel: cachedAstronautUserResult.item.slack_user_id || "",
       blocks: [
         {
           "type": "header",

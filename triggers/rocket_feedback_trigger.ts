@@ -15,20 +15,20 @@ const sampleTrigger: Trigger<typeof CollectRocketFeedbackWorkflow.definition> =
     workflow:
       `#/workflows/${CollectRocketFeedbackWorkflow.definition.callback_id}`,
     inputs: {
-      commenter_slack_user_id: {
-        value: "{{data.commenter_slack_user_id}}",
+      submitter_slack_username: {
+        value: "{{data.submitter_slack_username}}",
       },
-      astronaut_slack_user_id: {
-        value: "{{data.astronaut_slack_user_id}}",
+      reviewer_slack_username: {
+        value: "{{data.reviewer_slack_username}}",
+      },
+      astronaut_slack_username: {
+        value: "{{data.astronaut_slack_username}}",
       },
       comment_url: {
         value: "{{data.comment_url}}",
       },
-      comment_contents: {
-        value: "{{data.comment_contents}}",
-      },
-      team_channel_id: {
-        value: "{{data.team_channel_id}}",
+      comment_body: {
+        value: "{{data.comment_body}}",
       },
     },
   };

@@ -1,5 +1,5 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
-import { UsersDatastore } from "../datastores/users_datastore.ts";
+import TeamChannelUsersDatastore from "../datastores/team_channel_users_datastore.ts";
 
 export const AddUsersFunctionDefinition = DefineFunction({
   callback_id: "add_users",
@@ -29,10 +29,10 @@ export default SlackFunction(
     console.log("inputs", inputs);
     // Get the draft
     const existingUsersResults = await client.apps.datastore.get<
-      typeof UsersDatastore.definition
+      typeof TeamChannelUsersDatastore.definition
     >(
       {
-        datastore: UsersDatastore.name,
+        datastore: TeamChannelUsersDatastore.name,
         id: inputs.channel,
       },
     );
@@ -111,9 +111,9 @@ export default SlackFunction(
     console.log("channel", inputs.channel);
     console.log("updatedUsers", updatedUsers);
     const putResp = await client.apps.datastore.put<
-      typeof UsersDatastore.definition
+      typeof TeamChannelUsersDatastore.definition
     >({
-      datastore: UsersDatastore.name,
+      datastore: TeamChannelUsersDatastore.name,
       item: {
         team_slack_channel_id: inputs.channel,
         slack_user_ids: updatedUsers,

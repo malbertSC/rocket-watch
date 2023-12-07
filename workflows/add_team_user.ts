@@ -37,33 +37,35 @@ AddTeamUserFeedbackWorkflow.addStep(
 //     submit_label: "label",
 //     fields: {
 //       elements: [
-//         //   {
-//         //   "type": "section",
-//         //   "text": {
-//         //     "type": "mrkdwn",
-//         //     "text":
-//         //       "What team members should we look for in #team-channel?",
-//         //   },
-//         // }, {
-//         //   "type": "input",
-//         //   "element": {
-//         //     "type": "multi_users_select",
-//         //     "placeholder": {
-//         //       "type": "plain_text",
-//         //       "text": "Select users",
-//         //       "emoji": true,
-//         //     },
-//         //     "action_id": "multi_users_select-action",
-//         //     "initial_users": [],
-//         //   },
-//         //   "label": {
-//         //     "type": "plain_text",
-//         //     "text": "Your Team",
-//         //     "emoji": true,
-//         //   },
-//         // }
+//         {
+//           "type": "section",
+//           "text": {
+//             "type": "mrkdwn",
+//             "text": "What team members should we look for in #team-channel?",
+//           },
+//         },
+//         {
+//           "type": "input",
+//           "element": {
+//             "type": "multi_users_select",
+//             "placeholder": {
+//               "type": "plain_text",
+//               "text": "Select users",
+//               "emoji": true,
+//             },
+//             "action_id": "multi_users_select-action",
+//             "initial_users": [],
+//           },
+//           "label": {
+//             "type": "plain_text",
+//             "text": "Your Team",
+//             "emoji": true,
+//           },
+//         },
 //       ],
 //       required: [],
 //     },
 //   },
 // );
+
+export default AddTeamUserFeedbackWorkflow;
