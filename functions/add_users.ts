@@ -87,17 +87,6 @@ export default SlackFunction(
     });
 
     console.log(result);
-    // for (const user of inputs.users) {
-    //   const putResp = await client.apps.datastore.put<
-    //     typeof UsersDatastore.definition
-    //   >({
-    //     datastore: UsersDatastore.name,
-    //     item: user,
-    //   });
-    //   if (!putResp.ok) {
-    //     console.log(putResp.error);
-    //   }
-    // }
     return {
       completed: false,
     };

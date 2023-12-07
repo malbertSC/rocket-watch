@@ -1,6 +1,5 @@
 import { DefineFunction, SlackFunction } from "deno-slack-sdk/mod.ts";
 import UsersCacheDatastore from "../datastores/users_cache_datastore.ts";
-import reply_in_thread from "deno-slack-sdk/schema/slack/functions/reply_in_thread.ts";
 import { DatastoreItem } from "deno-slack-api/types.ts";
 
 export const UpdateUsersCacheFunctionDefinition = DefineFunction({
