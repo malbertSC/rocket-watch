@@ -60,8 +60,14 @@ export default SlackFunction(
       inputs.reviewer_slack_username,
     );
 
+    const blockQuoteCommentBody = inputs.comment_body.replace(
+      /\r?\n|\r/g,
+      "\r\n>",
+    );
+
     const infoText =
-      `Thanks for highlighting <@${reviewer.slack_user_id}>'s <${inputs.comment_url}|review comment>!  What was so great about it?  What did you learn?`;
+      `Thanks for highlighting <@${reviewer.slack_user_id}>'s <${inputs.comment_url}|review comment>:\n` +
+      `>${blockQuoteCommentBody}`;
 
     const astronaut = await getUserFromCache(
       client,
@@ -100,7 +106,7 @@ export default SlackFunction(
           },
           "label": {
             "type": "plain_text",
-            "text": "Your Take...",
+            "text": "What was so great about it?  What did you learn?",
             "emoji": true,
           },
         },
@@ -145,8 +151,19 @@ export default SlackFunction(
       inputs.reviewer_slack_username,
     );
 
+    const blockQuoteCommentBody = inputs.comment_body.replace(
+      /\r?\n|\r/g,
+      "\r\n>",
+    );
+    const blockQuoteActionText = action.value.replace(
+      /\r?\n|\r/g,
+      "\r\n>",
+    );
+
     const teamText =
-      `<@${astronaut.slack_user_id}> highlighted <@${reviewer.slack_user_id}>'s <${inputs.comment_url}|review comment>!`;
+      `<@${astronaut.slack_user_id}> highlighted <@${reviewer.slack_user_id}>'s <${inputs.comment_url}|review comment>:\n` +
+      `>${blockQuoteCommentBody}\n` +
+      `Here's what <@${astronaut.slack_user_id}> had to say:`;
 
     const channelsToPostToResult = await client.apps.datastore.query({
       datastore: TeamChannelUsersDatastore.name,
@@ -193,7 +210,7 @@ export default SlackFunction(
             "type": "section",
             "text": {
               "type": "mrkdwn",
-              "text": `>${action.value}`,
+              "text": `>${blockQuoteActionText}`,
             },
           },
         ],
