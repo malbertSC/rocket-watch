@@ -1,6 +1,6 @@
 import { DefineFunction, Schema, SlackFunction } from "deno-slack-sdk/mod.ts";
 import TeamChannelUsersDatastore from "../datastores/team_channel_users_datastore.ts";
-import { getUserFromCache } from "../util/get-user-from-cache.ts";
+import { SlackAPIClient } from "deno-slack-api/types.ts";
 
 const RESPONSE_ACTION_ID = "response_action";
 
@@ -55,7 +55,7 @@ export const GetRocketFeedbackDefinition = DefineFunction({
 export default SlackFunction(
   GetRocketFeedbackDefinition,
   async ({ inputs, client }) => {
-    const reviewer = await getUserFromCache(
+    const reviewer = await getUserIdFromEmail(
       client,
       inputs.reviewer_slack_username,
     );
@@ -66,15 +66,15 @@ export default SlackFunction(
     );
 
     const infoText =
-      `Thanks for highlighting <@${reviewer.slack_user_id}>'s <${inputs.comment_url}|review comment>:\n` +
+      `Thanks for highlighting <@${reviewer}>'s <${inputs.comment_url}|review comment>:\n` +
       `>${blockQuoteCommentBody}`;
 
-    const astronaut = await getUserFromCache(
+    const astronaut = await getUserIdFromEmail(
       client,
       inputs.astronaut_slack_username,
     );
     const response = await client.chat.postMessage({
-      channel: astronaut.slack_user_id || "",
+      channel: astronaut || "",
       blocks: [
         {
           "type": "header",
@@ -114,7 +114,9 @@ export default SlackFunction(
     });
 
     if (!response.ok) {
-      console.log("Error during request chat.postMessage!", response.error);
+      throw new Error(
+        `Error during request chat.postMessage! ${response.error}`,
+      );
     }
     return {
       completed: false,
@@ -142,11 +144,11 @@ export default SlackFunction(
       console.log("Error during manager chat.update!", msgUpdate.error);
     }
 
-    const astronaut = await getUserFromCache(
+    const astronaut = await getUserIdFromEmail(
       client,
       inputs.astronaut_slack_username,
     );
-    const reviewer = await getUserFromCache(
+    const reviewer = await getUserIdFromEmail(
       client,
       inputs.reviewer_slack_username,
     );
@@ -161,9 +163,9 @@ export default SlackFunction(
     );
 
     const teamText =
-      `<@${astronaut.slack_user_id}> highlighted <@${reviewer.slack_user_id}>'s <${inputs.comment_url}|review comment>:\n` +
+      `<@${astronaut}> highlighted <@${reviewer}>'s <${inputs.comment_url}|review comment>:\n` +
       `>${blockQuoteCommentBody}\n` +
-      `Here's what <@${astronaut.slack_user_id}> had to say:`;
+      `Here's what <@${astronaut}> had to say:`;
 
     const channelsToPostToResult = await client.apps.datastore.query({
       datastore: TeamChannelUsersDatastore.name,
@@ -172,7 +174,7 @@ export default SlackFunction(
         "#user_term": "slack_user_ids",
       },
       expression_values: {
-        ":user": astronaut.slack_user_id,
+        ":user": astronaut,
       },
     });
 
@@ -217,7 +219,9 @@ export default SlackFunction(
       });
 
       if (!response.ok) {
-        console.log("Error during request chat.postMessage!", response.error);
+        throw new Error(
+          `Error during request chat.postMessage! ${response.error}`,
+        );
       }
     }
 
@@ -227,3 +231,25 @@ export default SlackFunction(
     });
   },
 );
+
+export async function getUserIdFromEmail(
+  client: SlackAPIClient,
+  slackUsername: string,
+) {
+  const result = await client.users.lookupByEmail({
+    email: `${slackUsername}@squareup.com`,
+  });
+  if (!result.ok) {
+    // try block.xyz
+    const xyzResult = await client.users.lookupByEmail({
+      email: `${slackUsername}@block.xyz`,
+    });
+    if (!xyzResult.ok) {
+      throw new Error(
+        `Error looking up user by email: ${result.error}, ${xyzResult.error}`,
+      );
+    }
+    return xyzResult.user.id;
+  }
+  return result.user.id;
+}

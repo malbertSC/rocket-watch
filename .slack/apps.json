@@ -1,1 +1,12 @@
-{}
+{
+  "apps": {
+    "E01BAFDEXUP": {
+      "app_id": "A069QHU215F",
+      "enterprise_id": "E01BAFDEXUP",
+      "IsDev": false,
+      "team_domain": "square",
+      "team_id": "E01BAFDEXUP"
+    }
+  },
+  "default": "square"
+}
